@@ -12,13 +12,9 @@ A popular "save image as" extension was removed from the Chrome Web Store after 
 
 ## How it works
 
-When you choose a format, the extension:
+When you choose a format, the extension fetches the image directly in its service worker and converts it using `OffscreenCanvas` — entirely locally, in your browser. The result is passed straight to Chrome's native download manager. No page canvas, no external servers, no nonsense.
 
-1. Draws the image onto an HTML `<canvas>` element — locally, in your browser
-2. Calls `.toDataURL()` to convert it to the chosen format
-3. Passes the result to Chrome's native download manager
-
-That's it. The full logic is in `background.js` (~100 lines). There are no external dependencies, no bundlers, no obfuscated code.
+The full logic is in `background.js` (~100 lines). No external dependencies. No bundlers. No obfuscated code. Read it yourself.
 
 ## Permissions used
 
@@ -27,15 +23,15 @@ That's it. The full logic is in `background.js` (~100 lines). There are no exter
 | `contextMenus` | To add the right-click menu items |
 | `downloads` | To trigger the Save dialog |
 | `activeTab` | To read which tab you're on |
-| `scripting` | To run the canvas conversion in the page context |
-
-No `<all_urls>` host permissions. No access to your browsing history, cookies, or any page content beyond the specific image you click.
+| `scripting` | To run conversions in the page context |
+| `tabs` | To identify the current tab's origin |
+| `host_permissions` | To fetch images across all domains (this is what allows saving from Google, Gemini, Twitter, etc.) |
 
 ## Known limitation
 
-Images on sites with strict **CORS headers** may block canvas access — this is a browser security constraint that can't be worked around without a backend server (which we deliberately don't have). In practice this is rare. When it happens, the conversion will silently fail; the original extension had the same limitation.
+Sites that block all external fetches at the network level (such as Instagram) cannot be saved. This is a deliberate platform restriction on their end, not a solvable technical problem — the original extension couldn't manage it either.
 
-## Installation (from source)
+## Installation from source
 
 1. Clone or download this repository
 2. Go to `chrome://extensions/`
@@ -44,7 +40,7 @@ Images on sites with strict **CORS headers** may block canvas access — this is
 
 ## Contributing
 
-PRs welcome. Please keep it simple — the whole point is that anyone can audit this in five minutes.
+PRs welcome. Keep it simple — the whole point is that anyone can audit this in five minutes.
 
 ## License
 
